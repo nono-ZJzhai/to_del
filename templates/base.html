@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>大学生闲置图书交易平台</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <header>
+        <nav class="container">
+            <a href="{{ url_for('front.index') }}">首页</a>
+            {% if g.user %}
+                <span>{{ g.user.username }}</span>
+                <a href="{{ url_for('user.logout') }}">退出</a>
+                <a href="{{ url_for('book.publish') }}">发布图书</a>
+            {% else %}
+                <a href="{{ url_for('user.login') }}">登录</a>
+                <a href="{{ url_for('user.register') }}">注册</a>
+            {% endif %}
+        </nav>
+    </header>
+    <div class="container">
+        {% block content %}{% endblock %}
+    </div>
+</body>
+</html>

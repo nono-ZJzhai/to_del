@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <div class="book-detail">
+        <h1>{{ book.title }}</h1>
+        <div class="book-info">
+            <p><strong>ISBN:</strong> {{ book.isbn }}</p>
+            <p><strong>分类:</strong> {{ book.category }}</p>
+            <p><strong>新旧程度:</strong> {{ "%.2f" | format(book.condition|float / 100) }}</p>
+            <p><strong>价格:</strong> {{ book.price }}元</p>
+            <p><strong>状态:</strong> {{ book.status }}</p>
+            <p><strong>提货地点:</strong> {{ book.location }}</p>
+            <p><strong>联系方式:</strong> {{ book.contact }}</p>
+            <p><strong>发布时间:</strong> {{ book.publish_time }}</p>
+        </div>
+    {% if g.user and g.user.id != book.seller_id %}
+        <div class="actions">
+            {% if book.status == '未售出' %}
+                <a class="btn" href="{{ url_for('book.buy', book_id=book.id) }}">购买</a>
+            {% elif book.status == '等待确认收货' and g.user.id != book.seller_id %}
+                <a class="btn" href="{{ url_for('book.confirm', book_id=book.id) }}">确认收货</a>
+            {% endif %}
+        </div>
+    {% endif %}
+{% endblock %}

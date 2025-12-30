@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h1>图书列表</h1>
+    <div>
+        <a href="{{ url_for('front.index') }}">全部</a>
+        <a href="{{ url_for('front.category_books', category='教材') }}">教材</a>
+        <a href="{{ url_for('front.category_books', category='小说') }}">小说</a>
+        <a href="{{ url_for('front.category_books', category='工具书') }}">工具书</a>
+    </div>
+    <div class="book-list">
+        {% for book in books %}
+            <div class="book-item">
+                <div class="book-info">
+                    <h3><a href="{{ url_for('book.detail', book_id=book.id) }}">{{ book.title }}</a></h3>
+                    <p>价格: {{ book.price }}元</p>
+                    <p>状态: {{ book.status }}</p>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% endblock %}
