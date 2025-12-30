@@ -3,6 +3,7 @@ from flask import Flask
 from exts import db
 from models.user import User
 from models.book import Book
+from models.file import FileItem, FileRating
 import config
 
 def create_app():

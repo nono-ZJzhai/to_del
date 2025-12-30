@@ -14,6 +14,7 @@
                 <span>{{ g.user.username }}</span>
                 <a href="{{ url_for('user.logout') }}">退出</a>
                 <a href="{{ url_for('book.publish') }}">发布图书</a>
+                <a href="{{ url_for('file.file_list') }}">文件管理</a>
             {% else %}
                 <a href="{{ url_for('user.login') }}">登录</a>
                 <a href="{{ url_for('user.register') }}">注册</a>

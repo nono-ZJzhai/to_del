@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>文件管理</h1>
+
+<!-- 操作按钮 -->
+<div style="margin-bottom: 20px;">
+    <a href="{{ url_for('file.upload_file', parent_id=folder_id) }}" style="margin-right: 10px;">
+        <button>上传文件</button>
+    </a>
+    <button onclick="showCreateFolderForm()">创建文件夹</button>
+</div>
+
+<!-- 创建文件夹表单 -->
+<div id="create-folder-form" style="display: none; margin-bottom: 20px; padding: 10px; border: 1px solid #ccc;">
+    <form method="post" action="{{ url_for('file.create_folder') }}">
+        <input type="hidden" name="parent_id" value="{{ folder_id or '' }}">
+        <input type="text" name="folder_name" placeholder="文件夹名称" required>
+        <button type="submit">创建</button>
+        <button type="button" onclick="hideCreateFolderForm()">取消</button>
+    </form>
+</div>
+
+<!-- 面包屑导航 -->
+{% if current_folder or breadcrumbs %}
+<div style="margin-bottom: 15px;">
+    <a href="{{ url_for('file.file_list') }}">根目录</a>
+    {% for crumb in breadcrumbs %}
+        / <a href="{{ url_for('file.file_list', folder_id=crumb.id) }}">{{ crumb.name }}</a>
+    {% endfor %}
+    {% if current_folder %}
+        / <span>{{ current_folder.name }}</span>
+    {% endif %}
+</div>
+{% endif %}
+
+<!-- 消息提示 -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        <div style="margin-bottom: 15px;">
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}" style="padding: 10px; margin-bottom: 5px; 
+                    {% if category == 'error' %}background-color: #f8d7da; color: #721c24;{% endif %}
+                    {% if category == 'success' %}background-color: #d4edda; color: #155724;{% endif %}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endwith %}
+
+<!-- 文件列表 -->
+{% if files %}
+<table style="width: 100%; border-collapse: collapse;">
+    <thead>
+        <tr style="background-color: #f5f5f5;">
+            <th style="padding: 10px; text-align: left; border: 1px solid #ddd;">名称</th>
+            <th style="padding: 10px; text-align: left; border: 1px solid #ddd;">类型</th>
+            <th style="padding: 10px; text-align: left; border: 1px solid #ddd;">大小</th>
+            <th style="padding: 10px; text-align: left; border: 1px solid #ddd;">上传者</th>
+            <th style="padding: 10px; text-align: left; border: 1px solid #ddd;">上传时间</th>
+            <th style="padding: 10px; text-align: left; border: 1px solid #ddd;">评分</th>
+            <th style="padding: 10px; text-align: left; border: 1px solid #ddd;">操作</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for file in files %}
+        <tr>
+            <td style="padding: 10px; border: 1px solid #ddd;">
+                {% if file.type == 'folder' %}
+                    <a href="{{ url_for('file.file_list', folder_id=file.id) }}">? {{ file.name }}</a>
+                {% else %}
+                    <span>? {{ file.name }}</span>
+                {% endif %}
+            </td>
+            <td style="padding: 10px; border: 1px solid #ddd;">{{ '文件夹' if file.type == 'folder' else '文件' }}</td>
+            <td style="padding: 10px; border: 1px solid #ddd;">
+                {% if file.type == 'file' %}
+                    {% if file.file_size < 1024 %}
+                        {{ file.file_size }} B
+                    {% elif file.file_size < 1024 * 1024 %}
+                        {{ "%.2f"|format(file.file_size / 1024) }} KB
+                    {% else %}
+                        {{ "%.2f"|format(file.file_size / (1024 * 1024)) }} MB
+                    {% endif %}
+                {% else %}
+                    -
+                {% endif %}
+            </td>
+            <td style="padding: 10px; border: 1px solid #ddd;">{{ file.uploader.username }}</td>
+            <td style="padding: 10px; border: 1px solid #ddd;">{{ file.upload_time.strftime('%Y-%m-%d %H:%M') }}</td>
+            <td style="padding: 10px; border: 1px solid #ddd;">
+                {% if file.type == 'file' %}
+                    <div class="rating-section" data-file-id="{{ file.id }}">
+                        <button class="upvote-btn" onclick="rateFile({{ file.id }}, 'upvote')" 
+                                style="background: none; border: none; cursor: pointer; font-size: 16px;
+                                {% if user_ratings.get(file.id) == 'upvote' %}opacity: 1;{% else %}opacity: 0.5;{% endif %}">?</button>
+                        <span class="upvote-count">{{ file.upvotes_count }}</span>
+                        <button class="downvote-btn" onclick="rateFile({{ file.id }}, 'downvote')" 
+                                style="background: none; border: none; cursor: pointer; font-size: 16px;
+                                {% if user_ratings.get(file.id) == 'downvote' %}opacity: 1;{% else %}opacity: 0.5;{% endif %}">?</button>
+                        <span class="downvote-count">{{ file.downvotes_count }}</span>
+                    </div>
+                {% else %}
+                    -
+                {% endif %}
+            </td>
+            <td style="padding: 10px; border: 1px solid #ddd;">
+                {% if file.type == 'file' %}
+                    <a href="{{ url_for('file.download_file', file_id=file.id) }}">下载</a>
+                {% endif %}
+                {% if file.uploader_id == g.user.id %}
+                    <form method="post" action="{{ url_for('file.delete_file', file_id=file.id) }}" 
+                          style="display: inline;" onsubmit="return confirm('确定要删除吗？');">
+                        <button type="submit" style="background: none; border: none; color: red; cursor: pointer; text-decoration: underline;">删除</button>
+                    </form>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p>当前文件夹为空</p>
+{% endif %}
+
+<script>
+function showCreateFolderForm() {
+    document.getElementById('create-folder-form').style.display = 'block';
+}
+
+function hideCreateFolderForm() {
+    document.getElementById('create-folder-form').style.display = 'none';
+}
+
+function rateFile(fileId, ratingType) {
+    const url = `/file/rate/${fileId}/${ratingType}/`;
+    fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // 更新评分显示
+            const ratingSection = document.querySelector(`.rating-section[data-file-id="${fileId}"]`);
+            if (ratingSection) {
+                const upvoteCount = ratingSection.querySelector('.upvote-count');
+                const downvoteCount = ratingSection.querySelector('.downvote-count');
+                if (upvoteCount) upvoteCount.textContent = data.upvotes;
+                if (downvoteCount) downvoteCount.textContent = data.downvotes;
+                
+                // 更新按钮样式（可选：高亮当前用户的评分）
+                const upvoteBtn = ratingSection.querySelector('.upvote-btn');
+                const downvoteBtn = ratingSection.querySelector('.downvote-btn');
+                if (data.user_rating === 'upvote') {
+                    upvoteBtn.style.opacity = '1';
+                    downvoteBtn.style.opacity = '0.5';
+                } else if (data.user_rating === 'downvote') {
+                    upvoteBtn.style.opacity = '0.5';
+                    downvoteBtn.style.opacity = '1';
+                } else {
+                    upvoteBtn.style.opacity = '0.5';
+                    downvoteBtn.style.opacity = '0.5';
+                }
+            }
+        } else {
+            alert(data.message || '操作失败');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('操作失败，请重试');
+    });
+}
+</script>
+{% endblock %}
+
